@@ -2371,12 +2371,12 @@ function renderMatchs(){
     const r0=played?r[0]:'', r1=played?r[1]:'';
 
     let sc;
+    const st=matchStatus(id);
     if(isAdmin){
       sc=`<td><input class="sinp-score${r0===''?' d':''}" type="number" min="0" max="30" value="${r0}" id="sa${id}" onchange="markD(${id})" onclick="event.stopPropagation()"></td>
          <td style="text-align:center;color:var(--t4);font-size:.75rem">–</td>
          <td><input class="sinp-score${r1===''?' d':''}" type="number" min="0" max="30" value="${r1}" id="sb${id}" onchange="markD(${id})" onclick="event.stopPropagation()"></td>`;
     }else{
-      const st=matchStatus(id);
       const disp=st==='done'
         ?`<div class="score-box done"><span class="sv">${r0}</span><span class="sdash">–</span><span class="sv">${r1}</span></div>`
         :st==='live'
