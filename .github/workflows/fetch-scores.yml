@@ -1,0 +1,303 @@
+name: Auto-Fetch Scores (24/7)
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch scores from ESPN + worldcup26.ir
+        run: |
+          cat > fetch.mjs << 'EOF'
+          const ESPN_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=300';
+          const WC26_URL = 'https://worldcup26.ir/get/games';
+          const FB_URL = 'https://cdm-2026-77589-default-rtdb.europe-west1.firebasedatabase.app';
+          const INTERVAL_MS = 30 * 60 * 1000;
+
+          const NAME_MAP = {
+            'Mexico':'Mexique','South Africa':'Afrique du Sud',
+            'South Korea':'Corée du Sud','Korea Republic':'Corée du Sud',
+            'Czech Republic':'République tchèque','Czechia':'République tchèque',
+            'Canada':'Canada','Bosnia and Herzegovina':'Bosnie-herzégovine',
+            'Bosnia-Herzegovina':'Bosnie-herzégovine','Qatar':'Qatar',
+            'Switzerland':'Suisse','USA':'États-Unis','United States':'États-Unis',
+            'Paraguay':'Paraguay','Australia':'Australie','Turkey':'Turquie',
+            'Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse',
+            'Germany':'Allemagne','Curaçao':'Curaçao',
+            'Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède','Tunisia':'Tunisie',
+            'Spain':'Espagne','Cape Verde':'Cap-Vert','Cabo Verde':'Cap-Vert',
+            'Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay',
+            'Belgium':'Belgique','Egypt':'Égypte',
+            'Iran':'Iran','New Zealand':'Nouvelle-Zélande',
+            'France':'France','Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège',
+            'Argentina':'Argentine','Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie',
+            'Portugal':'Portugal','England':'Angleterre',
+            'DR Congo':'RD Congo','Democratic Republic of the Congo':'RD Congo',
+            'Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama','Uzbekistan':'Ouzbékistan',
+            'Colombia':'Colombie','Ecuador':'Équateur',
+            "Côte d'Ivoire":"Côte d'ivoire","Cote d'Ivoire":"Côte d'ivoire",'Ivory Coast':"Côte d'ivoire",
+            'Paraguay':'Paraguay'
+          };
+
+          const MATCHES = [
+            ["Mexique","Afrique du Sud"],["Corée du Sud","République tchèque"],
+            ["Canada","Bosnie-herzégovine"],["USA","Paraguay"],["Qatar","Suisse"],
+            ["Brésil","Maroc"],["Haïti","Écosse"],["Australie","Turquie"],
+            ["Allemagne","Curaçao"],["Pays-Bas","Japon"],["Côte d'ivoire","Équateur"],
+            ["Suède","Tunisie"],["Espagne","Cap-Vert"],["Belgique","Égypte"],
+            ["Arabie Saoudite","Uruguay"],["Iran","Nouvelle-Zélande"],["France","Sénégal"],
+            ["Irak","Norvège"],["Argentine","Algérie"],["Autriche","Jordanie"],
+            ["Portugal","RD Congo"],["Angleterre","Croatie"],["Ghana","Panama"],
+            ["Ouzbékistan","Colombie"],["République tchèque","Afrique du Sud"],
+            ["Suisse","Bosnie-herzégovine"],["Canada","Qatar"],["Mexique","Corée du Sud"],
+            ["USA","Australie"],["Écosse","Maroc"],["Brésil","Haïti"],["Turquie","Paraguay"],
+            ["Pays-Bas","Suède"],["Allemagne","Côte d'ivoire"],["Équateur","Curaçao"],
+            ["Tunisie","Japon"],["Espagne","Arabie Saoudite"],["Belgique","Iran"],
+            ["Uruguay","Cap-Vert"],["Nouvelle-Zélande","Égypte"],["Argentine","Autriche"],
+            ["France","Irak"],["Norvège","Sénégal"],["Jordanie","Algérie"],
+            ["Portugal","Ouzbékistan"],["Angleterre","Ghana"],["Panama","Croatie"],
+            ["Colombie","RD Congo"],["Suisse","Canada"],["Bosnie-herzégovine","Qatar"],
+            ["Écosse","Brésil"],["Maroc","Haïti"],["République tchèque","Mexique"],
+            ["Afrique du Sud","Corée du Sud"],["Équateur","Allemagne"],["Curaçao","Côte d'ivoire"],
+            ["Japon","Suède"],["Tunisie","Pays-Bas"],["Turquie","USA"],["Paraguay","Australie"],
+            ["Norvège","France"],["Sénégal","Irak"],["Cap-Vert","Arabie Saoudite"],
+            ["Uruguay","Espagne"],["Égypte","Iran"],["Nouvelle-Zélande","Belgique"],
+            ["Panama","Angleterre"],["Croatie","Ghana"],["Colombie","Portugal"],
+            ["RD Congo","Ouzbékistan"],["Algérie","Autriche"],["Jordanie","Argentine"]
+          ];
+
+          function normName(s) {
+            if (!s) return '';
+            s = s.trim();
+            if (NAME_MAP[s]) return NAME_MAP[s];
+            return s;
+          }
+
+          async function fetchESPN() {
+            try {
+              const res = await fetch(ESPN_URL, { signal: AbortSignal.timeout(15000) });
+              if (!res.ok) throw new Error('ESPN ' + res.status);
+              const data = await res.json();
+              const events = data.events || [];
+              const rs = {};
+              const ae = {};
+              const stats = {};
+
+              events.forEach(e => {
+                const comp = e.competitions?.[0];
+                if (!comp) return;
+                const status = comp.status?.type?.name;
+                if (!['STATUS_FULL_TIME','STATUS_FINAL','STATUS_IN_PROGRESS','STATUS_HALFTIME'].includes(status)) return;
+                const home = comp.competitors?.find(c => c.homeAway === 'home');
+                const away = comp.competitors?.find(c => c.homeAway === 'away');
+                if (!home || !away) return;
+                const hn = normName(home.team?.displayName || home.team?.name || '');
+                const an = normName(away.team?.displayName || away.team?.name || '');
+                const gh = parseInt(home.score) || 0;
+                const ga = parseInt(away.score) || 0;
+
+                MATCHES.forEach(([t1, t2], idx) => {
+                  const mid = idx + 1;
+                  if ((hn === t1 && an === t2) || (hn === t2 && an === t1)) {
+                    const swapped = hn !== t1;
+                    rs[mid] = [swapped ? ga : gh, swapped ? gh : ga];
+
+                    // Extract events
+                    const details = comp.details || [];
+                    if (details.length > 0) {
+                      const homeTeamId = home?.team?.id;
+                      const awayTeamId = away?.team?.id;
+                      const parsed = [];
+                      details.forEach(d => {
+                        const minTxt = d.clock?.displayValue || '';
+                        const min = parseInt(minTxt) || 0;
+                        if (!min || !d.type?.text) return;
+                        const isHome = d.team?.id === homeTeamId;
+                        const side = swapped ? (isHome ? 'a' : 'h') : (isHome ? 'h' : 'a');
+                        const player = d.athletesInvolved?.[0]?.displayName || '';
+                        if (d.scoringPlay) {
+                          if (d.ownGoal) parsed.push({ type: 'owngoal', min, side, player });
+                          else if (d.penaltyKick) parsed.push({ type: 'pen', min, side, player });
+                          else parsed.push({ type: 'goal', min, side, player });
+                        } else if (d.yellowCard) {
+                          parsed.push({ type: 'yellow', min, side, player });
+                        } else if (d.redCard) {
+                          parsed.push({ type: 'red', min, side, player });
+                        } else if (d.substitution) {
+                          const pOut = d.athletesInvolved?.[0]?.displayName || '';
+                          const pIn = d.athletesInvolved?.[1]?.displayName || '';
+                          if (pOut && pIn) parsed.push({ type: 'sub', min, side, playerOut: pOut, playerIn: pIn });
+                        }
+                      });
+                      if (parsed.length > 0) ae[mid] = parsed;
+                    }
+                  }
+                });
+              });
+
+              // Fetch summary stats for each match with results
+              for (const [mid, score] of Object.entries(rs)) {
+                try {
+                  const eventId = events.find(e => {
+                    const comp = e.competitions?.[0];
+                    if (!comp) return false;
+                    const h = normName(comp.competitors?.find(c => c.homeAway === 'home')?.team?.displayName || '');
+                    const a = normName(comp.competitors?.find(c => c.homeAway === 'away')?.team?.displayName || '');
+                    const m = MATCHES[mid - 1];
+                    return m && ((h === m[0] && a === m[1]) || (h === m[1] && a === m[0]));
+                  })?.id;
+                  if (eventId) {
+                    const sumRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${eventId}`, { signal: AbortSignal.timeout(8000) });
+                    if (sumRes.ok) {
+                      const sumData = await sumRes.json();
+                      const teams = sumData.boxscore?.teams || [];
+                      if (teams.length >= 2) {
+                        const parse = t => { const o = {}; (t.statistics || []).forEach(s => o[s.name] = s.displayValue || String(s.value || '')); return o; };
+                        const hs = parse(teams[0]), as = parse(teams[1]);
+                        const MAP = {
+                          poss: ['possessionPct','possession','possessionPercentage'],
+                          shots: ['totalShots','shots','shotsAttempted'],
+                          sot: ['shotsOnTarget','onTargetAttempts','shotsOnGoal'],
+                          corners: ['cornerKicks','corners','cornerKick'],
+                          fouls: ['fouls','totalFouls','foulCommitted'],
+                          offside: ['offsides','offside','offsidesCaught'],
+                          ycard: ['yellowCards','bookings'],
+                        };
+                        const ms = {};
+                        Object.entries(MAP).forEach(([k, names]) => {
+                          for (const n of names) { if (hs[n] !== undefined) { ms[k + '_h'] = parseFloat(hs[n]); break; } }
+                          for (const n of names) { if (as[n] !== undefined) { ms[k + '_a'] = parseFloat(as[n]); break; } }
+                        });
+                        if (Object.keys(ms).length > 0) stats[mid] = ms;
+                      }
+                    }
+                  }
+                } catch(e) { /* skip stats for this match */ }
+              }
+
+              return { rs, ae, stats, source: 'espn' };
+            } catch(e) { return null; }
+          }
+
+          async function fetchWC26() {
+            try {
+              const res = await fetch(WC26_URL, { signal: AbortSignal.timeout(15000) });
+              if (!res.ok) throw new Error('WC26 ' + res.status);
+              const data = await res.json();
+              const games = data.games || data || [];
+              const rs = {};
+              games.forEach(g => {
+                if (!g.finished && !g.live) return;
+                const hn = normName(g.home_team?.name || g.homeTeam || '');
+                const an = normName(g.away_team?.name || g.awayTeam || '');
+                const gh = parseInt(g.home_score ?? g.homeScore) || 0;
+                const ga = parseInt(g.away_score ?? g.awayScore) || 0;
+                MATCHES.forEach(([t1, t2], idx) => {
+                  if ((hn === t1 && an === t2) || (hn === t2 && an === t1)) {
+                    const swapped = hn !== t1;
+                    rs[idx + 1] = [swapped ? ga : gh, swapped ? gh : ga];
+                  }
+                });
+              });
+              return Object.keys(rs).length > 0 ? { rs } : null;
+            } catch(e) { return null; }
+          }
+
+          async function pushToFB(path, data) {
+            if (!data || Object.keys(data).length === 0) return;
+            await fetch(`${FB_URL}/${path}.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+          }
+
+          async function mergeToFB(path, data) {
+            if (!data || Object.keys(data).length === 0) return;
+            await fetch(`${FB_URL}/${path}.json`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+          }
+
+          // 1) Fetch existing data from Firebase (to preserve manual edits)
+          let existingRS = {};
+          try {
+            const exRes = await fetch(`${FB_URL}/rs.json`, { signal: AbortSignal.timeout(10000) });
+            if (exRes.ok) existingRS = await exRes.json() || {};
+          } catch(e) {}
+
+          let existingMS = {};
+          try {
+            const exRes = await fetch(`${FB_URL}/ms.json`, { signal: AbortSignal.timeout(10000) });
+            if (exRes.ok) existingMS = await exRes.json() || {};
+          } catch(e) {}
+
+          let existingAE = {};
+          try {
+            const exRes = await fetch(`${FB_URL}/ae.json`, { signal: AbortSignal.timeout(10000) });
+            if (exRes.ok) existingAE = await exRes.json() || {};
+          } catch(e) {}
+
+          // 2) Try ESPN first, fallback WC26
+          let result = await fetchESPN();
+          if (!result || Object.keys(result.rs).length === 0) {
+            console.log('ESPN empty, trying WC26 backup...');
+            result = await fetchWC26();
+          }
+
+          if (result && result.rs && Object.keys(result.rs).length > 0) {
+            // Merge: preserve existing manual scores if ESPN doesn't have them,
+            // overwrite with ESPN data when available
+            const mergedRS = { ...existingRS };
+            Object.entries(result.rs).forEach(([k, v]) => { mergedRS[k] = v; });
+
+            // Only push valid scores (not undefined/null)
+            const cleanRS = {};
+            Object.entries(mergedRS).forEach(([k, v]) => {
+              if (v && Array.isArray(v) && v[0] !== null && v[0] !== undefined) {
+                cleanRS[k] = v;
+              }
+            });
+
+            console.log(`Pushing ${Object.keys(cleanRS).length} scores to Firebase`);
+            await pushToFB('rs', cleanRS);
+
+            if (result.stats && Object.keys(result.stats).length > 0) {
+              const mergedMS = { ...existingMS, ...result.stats };
+              console.log(`Pushing ${Object.keys(result.stats).length} match stats`);
+              await mergeToFB('ms', mergedMS);
+            }
+
+            if (result.ae && Object.keys(result.ae).length > 0) {
+              const mergedAE = { ...existingAE, ...result.ae };
+              await mergeToFB('ae', mergedAE);
+            }
+            console.log('✅ All data pushed successfully');
+          } else {
+            console.log('⚠️ No scores found from any source');
+          }
+
+          // 3) Update lastFetched timestamp
+          await fetch(`${FB_URL}/_meta.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ts: new Date().getTime(),
+              lastFetch: new Date().toISOString(),
+              totalMatches: Object.keys(existingRS).length
+            })
+          });
+
+          console.log('✅ Done');
+          EOF
+
+          node fetch.mjs
