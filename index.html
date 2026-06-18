@@ -429,14 +429,19 @@ table.tbl tbody tr.played td{background:rgba(0,204,122,.02)}
 .ws{width:34px}.wsep{width:10px}.wp{width:44px}.wact{width:40px}
 
 /* SCORE CELL */
-.score-box{display:inline-flex;align-items:center;gap:.18rem;background:var(--c3);
-  border:1px solid var(--g2);border-radius:6px;padding:.18rem .4rem;min-width:52px;
-  justify-content:center}
-.score-box.done{border-color:rgba(0,204,122,.25);background:rgba(0,204,122,.06)}
+.score-box{display:inline-flex;align-items:center;gap:.2rem;background:var(--c3);
+  border:1.5px solid var(--g1);border-radius:8px;padding:.16rem .45rem;line-height:1.3;
+  font-size:.82rem;font-weight:700}
+.score-box.done{border-color:rgba(5,150,105,.25);background:rgba(5,150,105,.06)}
+.score-box.live{border-color:rgba(0,200,255,.4);background:rgba(0,200,255,.08);animation:pulse 1.8s infinite}
 .score-box.inp{background:transparent;border:none;padding:0;gap:.12rem}
-.sv{font-size:.95rem;font-weight:800;color:#fff;letter-spacing:.02em;min-width:14px;text-align:center}
+.sv{font-variant-numeric:tabular-nums}
 .sdash{color:var(--t4);font-size:.85rem;font-weight:600;margin:0 .08rem}
 .snone{color:var(--t4);font-size:.75rem;font-style:italic}
+.slive-dot{width:5px;height:5px;border-radius:50%;background:var(--cy);display:inline-block;margin-left:2px;animation:pulse 1s infinite}
+.tr-live{font-size:.45rem;color:var(--cy);margin-left:3px;animation:pulse 1s infinite;vertical-align:super}
+tr.live{background:rgba(0,200,255,.03)!important}
+tr.live:hover{background:rgba(0,200,255,.06)!important}
 .sinp-score{width:28px;background:rgba(255,255,255,.07);border:1.5px solid var(--g2);
   border-radius:5px;padding:.15rem .18rem;color:#fff;font-size:16px;font-weight:800;
   text-align:center;outline:none;transition:border-color .2s;
@@ -701,12 +706,12 @@ table.tbl tbody tr.played td{background:rgba(0,204,122,.02)}
 .stat-row{display:flex;flex-direction:column;gap:.3rem}
 .stat-vals{display:flex;align-items:center;justify-content:space-between;font-size:.74rem}
 .stat-val{font-weight:700;color:var(--t1);min-width:36px;text-align:center}
-.stat-val-h{color:var(--blu2);text-align:left}
-.stat-val-a{color:var(--gold);text-align:right}
+.stat-val-h{color:var(--cy2);text-align:left}
+.stat-val-a{color:var(--ma2);text-align:right}
 .stat-label{color:var(--t3);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
 .stat-bar{display:flex;height:6px;border-radius:4px;overflow:hidden;background:var(--g1)}
-.stat-bar-h{background:var(--blu2);transition:width .4s}
-.stat-bar-a{background:var(--gold);transition:width .4s}
+.stat-bar-h{background:var(--cy);transition:width .4s}
+.stat-bar-a{background:var(--ma);transition:width .4s}
 
 /* PRONO ROW IN MODAL */
 .pr-row{display:flex;align-items:center;gap:.5rem;padding:.32rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
@@ -1245,6 +1250,8 @@ let _fbMERef=null;
 let _fbMSRef=null;
 let _fbAERef=null;
 let _fbMetaRef=null;
+let _fbLiveRef=null;
+let _fbLiveData={};
 let _fbReady=false;
 
 function initFirebase(){
@@ -1263,6 +1270,7 @@ function initFirebase(){
         _fbMSRef=_fbDB.ref('ms');
         _fbAERef=_fbDB.ref('ae');
         _fbMetaRef=_fbDB.ref('_meta');
+        _fbLiveRef=_fbDB.ref('_live');
         _fbReady=true;
         resolve();
       };
@@ -1394,6 +1402,13 @@ async function startFirebaseSync(){
         const txt=document.getElementById('lchip-txt');
         if(txt)txt.textContent=label;
       }
+    });
+
+    // Écoute _live — matchs en direct
+    _fbLiveRef.on('value',snap=>{
+      if(!snap.exists()){_fbLiveData={};return;}
+      _fbLiveData=snap.val()||{};
+      renderAll();
     });
 
     toast('🔥 Connecté — données en temps réel','inf');
@@ -2014,9 +2029,9 @@ function renderTopScorers(){
 async function fetchAll(){
   const n=await fetchESPN();
   if(n===-1){
-    // ESPN échoue → essayer backup
     await fetchWC26();
   }
+  renderAll();
 }
 
 async function tryFetch(){
@@ -2314,6 +2329,15 @@ function renderClassement(){
     </div>`;
 }
 
+// Helper: statut live
+function matchStatus(id){
+  const em=window._espnMap&&window._espnMap[id];
+  if(em&&em.isLive) return 'live';
+  if(_fbLiveData&&_fbLiveData[id]) return 'live';
+  const r=RS[id]||[null,null];
+  return r[0]!==null?'done':'soon';
+}
+
 // ═══════════════════════════════════════════════════
 // RENDER — MATCHS
 // ═══════════════════════════════════════════════════
@@ -2352,8 +2376,11 @@ function renderMatchs(){
          <td style="text-align:center;color:var(--t4);font-size:.75rem">–</td>
          <td><input class="sinp-score${r1===''?' d':''}" type="number" min="0" max="30" value="${r1}" id="sb${id}" onchange="markD(${id})" onclick="event.stopPropagation()"></td>`;
     }else{
-      const disp=played
+      const st=matchStatus(id);
+      const disp=st==='done'
         ?`<div class="score-box done"><span class="sv">${r0}</span><span class="sdash">–</span><span class="sv">${r1}</span></div>`
+        :st==='live'
+        ?`<div class="score-box live"><span class="sv">${r0}</span><span class="sdash">–</span><span class="sv">${r1}</span><span class="slive-dot"></span></div>`
         :`<div class="score-box"><span class="snone">?–?</span></div>`;
       sc=`<td colspan="3" style="text-align:center;padding:.3rem .4rem">${disp}</td>`;
     }
@@ -2368,10 +2395,10 @@ function renderMatchs(){
       ?`<td><button class="sbtn" onclick="event.stopPropagation();saveM(${id})">✓</button></td>`
       :`<td></td>`;
 
-    return `<tr data-id="${id}" data-ph="gr" class="${played?'played':''}" onclick="openMM(${id})">
+    return `<tr data-id="${id}" data-ph="gr" class="${st==='live'?'live':played?'played':''}" onclick="openMM(${id})">
       <td style="color:var(--t4);font-size:.7rem">${id}</td>
       <td style="color:var(--t4);font-size:.7rem">${m[1]}</td>
-      <td style="color:var(--t4);font-size:.7rem">${m[2]}</td>
+      <td style="color:var(--t4);font-size:.7rem">${m[2]}${st==='live'?'<span class="tr-live">●</span>':''}</td>
       <td><div class="tc-w"><span class="tf">${fl(t1)}</span><span class="tn">${t1}</span></div></td>
       <td style="color:var(--t4);font-size:.6rem;text-align:center">vs</td>
       <td><div class="tc-w"><span class="tf">${fl(t2)}</span><span class="tn">${t2}</span></div></td>
@@ -2554,21 +2581,22 @@ async function autoFetchStats(id, retries=3){
 function renderMM(id){
   const m=MATCHES.find(x=>x[0]===id); if(!m) return;
   const r=RS[id]||[null,null];
-  const played=r[0]!==null;
   const t1=m[3],t2=m[4];
   const manualEvts=(ME[id]||[]);
   const autoEvts=(AE[id]||[]);
-  // Merge: manual events replace auto events with same min+type+side+player
   const mergeKey=e=>`${e.min}_${e.type}_${e.side}_${e.player||e.playerOut||''}`;
   const manualKeys=new Set(manualEvts.map(mergeKey));
   const evts=[...manualEvts,...autoEvts.filter(e=>!manualKeys.has(mergeKey(e)))].sort((a,b)=>a.min-b.min);
-  const st=MS[id]||{};
+  const ms=MS[id]||{};
+  const mst=matchStatus(id);
 
   // ── HEAD ──
-  const scoreHtml=played
-    ?`<div class="md-score-box done"><span class="md-score-val">${r[0]}</span><span class="md-score-sep">–</span><span class="md-score-val">${r[1]}</span></div>`
+  const scoreHtml=mst!=='soon'
+    ?`<div class="md-score-box ${mst==='live'?'live':'done'}"><span class="md-score-val">${r[0]}</span><span class="md-score-sep">–</span><span class="md-score-val">${r[1]}</span></div>`
     :`<div class="md-score-box"><span class="md-score-pending">vs</span></div>`;
-  const statusHtml=played
+  const statusHtml=mst==='live'
+    ?`<span class="status-chip sc-live">● EN DIRECT</span>`
+    :mst==='done'
     ?`<span class="status-chip sc-done">⏱ Terminé</span>`
     :`<span class="status-chip sc-soon">🕐 À venir</span>`;
 
@@ -2630,8 +2658,8 @@ function renderMM(id){
   let statsHtml='';
   if(hasStats){
     const rows=STAT_DEFS.map(d=>{
-      const h=st[d.k+'_h']??'';
-      const a=st[d.k+'_a']??'';
+      const h=ms[d.k+'_h']??'';
+      const a=ms[d.k+'_a']??'';
       if(h===''&&a==='')return'';
       const hv=parseFloat(h)||0, av=parseFloat(a)||0;
       const tot=hv+av||1;

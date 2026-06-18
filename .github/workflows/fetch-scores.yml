@@ -89,6 +89,7 @@ jobs:
               const rs = {};
               const ae = {};
               const stats = {};
+              const live = {};
 
               events.forEach(e => {
                 const comp = e.competitions?.[0];
@@ -108,6 +109,7 @@ jobs:
                   if ((hn === t1 && an === t2) || (hn === t2 && an === t1)) {
                     const swapped = hn !== t1;
                     rs[mid] = [swapped ? ga : gh, swapped ? gh : ga];
+                    if (['STATUS_IN_PROGRESS','STATUS_HALFTIME'].includes(status)) live[mid] = true;
 
                     // Extract events
                     const details = comp.details || [];
@@ -182,7 +184,7 @@ jobs:
                 } catch(e) { /* skip stats for this match */ }
               }
 
-              return { rs, ae, stats, source: 'espn' };
+              return { rs, ae, stats, live, source: 'espn' };
             } catch(e) { return null; }
           }
 
@@ -280,6 +282,15 @@ jobs:
             if (result.ae && Object.keys(result.ae).length > 0) {
               const mergedAE = { ...existingAE, ...result.ae };
               await mergeToFB('ae', mergedAE);
+            }
+
+            // 2.5) Push live status (only from ESPN, WC26 doesn't have live data)
+            if (result.live) {
+              if (Object.keys(result.live).length > 0) {
+                await pushToFB('_live', result.live);
+              } else {
+                await pushToFB('_live', {});
+              }
             }
             console.log('✅ All data pushed successfully');
           } else {
