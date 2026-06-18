@@ -131,28 +131,25 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .skel-stats{height:36px;border-radius:6px;flex:1}
 
 /* ══════════ CIRQUE ══════════ */
-@keyframes circusWobble{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
-@keyframes circusFall{0%{transform:translateY(-60px) rotate(0);opacity:0}60%{transform:translateY(0) rotate(720deg);opacity:1}80%{transform:translateY(-8px) rotate(720deg)}100%{transform:translateY(0) rotate(720deg)}}
-@keyframes circusJuggle{0%{transform:translateY(0)}25%{transform:translateY(-18px)}50%{transform:translateY(0)}75%{transform:translateY(-12px)}100%{transform:translateY(0)}}
-@keyframes circusLion{0%,100%{transform:translateX(0)}25%{transform:translateX(8px)}75%{transform:translateX(-8px)}}
-@keyframes circusBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes circusTent{0%{background-position:0% 0%}100%{background-position:40px 0}}
-.circus{background:linear-gradient(135deg,#1a0a0a 0%,#2d1010 50%,#1a0a0a 100%);border:2px solid var(--red);border-radius:16px;padding:1.5rem 1rem 2rem;position:relative;overflow:hidden;text-align:center}
-.circus-tent{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(244,63,94,.12) 0,rgba(244,63,94,.12) 20px,rgba(244,63,94,.04) 20px,rgba(244,63,94,.04) 40px);background-size:40px 100%;animation:circusTent 8s linear infinite;pointer-events:none}
-.circus-title{font-size:1.1rem;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.3rem;position:relative;z-index:1;animation:circusWobble 3s ease-in-out infinite}
-.circus-sub{font-size:.75rem;color:var(--red2);margin-bottom:1.2rem;position:relative;z-index:1}
-.circus-stage{display:flex;justify-content:center;align-items:flex-end;gap:1rem;position:relative;z-index:1;flex-wrap:wrap}
-.circus-act{width:160px;background:rgba(0,0,0,.35);border:1px solid rgba(244,63,94,.2);border-radius:14px;padding:.8rem .5rem .7rem;animation:circusBounce 4s ease-in-out infinite;position:relative}
-.circus-act:nth-child(2){animation-delay:1s}
-.circus-act:nth-child(3){animation-delay:2s}
-.circus-act-av{font-size:2rem;margin-bottom:.2rem;display:block}
-.circus-act-name{font-size:.8rem;font-weight:700;color:var(--t1);margin-bottom:.15rem}
-.circus-act-pts{font-size:.7rem;color:var(--t4)}
-.circus-act-gag{font-size:.65rem;color:var(--red2);margin-top:.35rem;font-style:italic;line-height:1.3}
-.act-fall .circus-act-av{animation:circusFall 2s ease-out both}
-.act-juggle .circus-act-av{animation:circusJuggle .6s ease-in-out infinite}
-.act-lion .circus-act-av{animation:circusLion .4s ease-in-out infinite;display:inline-block}
-.act-juggle::after{content:'⚽⚽⚽';position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:.55rem;letter-spacing:4px;animation:circusJuggle .6s ease-in-out infinite;opacity:.6}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+
+.tail-section{border:1px solid var(--g1);border-radius:14px;padding:1.25rem 1rem;
+  background:var(--c2);position:relative}
+.tail-title{font-size:.85rem;font-weight:700;color:var(--t2);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:.15rem}
+.tail-sub{font-size:.7rem;color:var(--t4);margin-bottom:1rem}
+.tail-grid{display:flex;gap:.65rem;justify-content:center;flex-wrap:wrap}
+.tail-card{text-align:center;padding:.85rem .7rem;background:var(--c1);
+  border:1px solid var(--g1);border-radius:10px;min-width:110px;flex:1;max-width:160px;
+  animation:fadeUp .4s ease both}
+.tail-card:nth-child(2){animation-delay:.1s}
+.tail-card:nth-child(3){animation-delay:.2s}
+.tail-pos{font-size:.65rem;font-weight:700;color:var(--t4);letter-spacing:.08em;margin-bottom:.35rem}
+.tail-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.95rem;margin:0 auto .35rem;border:1.5px solid}
+.tail-name{font-size:.78rem;font-weight:600;color:var(--t2);margin-bottom:.15rem}
+.tail-pts{font-size:1.1rem;font-weight:700;letter-spacing:-.02em}
+.tail-gap{font-size:.6rem;color:var(--t4);margin-top:.2rem}
 
 /* ══════════ LOGIN OVERLAY ══════════ */
 .overlay{position:fixed;inset:0;z-index:900;display:flex;
@@ -316,55 +313,60 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .prog-track-bg{background:var(--c4);border-radius:99px;height:8px;overflow:hidden}
 .prog-track-fill{height:8px;border-radius:99px;background:var(--G1);transition:width .8s cubic-bezier(.4,0,.2,1)}
 .prog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1.25rem}
-.mini-stat{background:var(--c2);border:1px solid var(--g1);border-radius:12px;padding:.9rem 1rem;
+.mini-stat{background:var(--c2);border:1px solid var(--g1);border-radius:10px;padding:.85rem 1rem;
   position:relative;overflow:hidden;transition:all .2s}
 .mini-stat:hover{border-color:var(--g2);transform:translateY(-1px)}
-.mini-stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--acc);border-radius:0}
-.mini-stat-v{font-size:1.85rem;font-weight:900;line-height:1;letter-spacing:-.03em}
-.mini-stat-l{font-size:.6rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem}
+.mini-stat::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:var(--acc);border-radius:0;opacity:.6}
+.mini-stat-v{font-size:1.7rem;font-weight:800;line-height:1;letter-spacing:-.03em}
+.mini-stat-l{font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem}
 
 /* ══════════ PODIUM ══════════ */
 .podium-section{margin-bottom:1.25rem}
 .podium{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:.75rem;align-items:end}
-.pod{border-radius:16px;padding:1.25rem 1rem 1.1rem;text-align:center;position:relative;
-  overflow:hidden;cursor:default;transition:transform .22s}
-.pod:hover{transform:translateY(-4px)}
-.pod::before{content:'';position:absolute;inset:0;opacity:0;background:var(--G1);transition:opacity .2s}
-.pod-1{background:linear-gradient(160deg,#1f1400 0%,var(--c2) 100%);
-  border:1px solid rgba(240,168,40,.35);box-shadow:0 0 40px rgba(240,168,40,.1),var(--sh2)}
-.pod-2{background:linear-gradient(160deg,#101820 0%,var(--c2) 100%);
-  border:1px solid rgba(148,163,184,.2);box-shadow:var(--sh)}
-.pod-3{background:linear-gradient(160deg,#150e00 0%,var(--c2) 100%);
-  border:1px solid rgba(217,119,6,.22);box-shadow:var(--sh)}
+.pod{border-radius:16px;padding:1.35rem 1rem 1.1rem;text-align:center;position:relative;
+  overflow:hidden;cursor:default;transition:transform .25s,box-shadow .25s}
+.pod:hover{transform:translateY(-3px)}
+.pod-1{background:linear-gradient(165deg,#1a1100 0%,#0f0a02 40%,var(--c2) 100%);
+  border:1px solid rgba(240,168,40,.3);box-shadow:0 0 40px rgba(240,168,40,.1),var(--sh2)}
+.pod-2{background:linear-gradient(165deg,#10161c 0%,#0a0d14 40%,var(--c2) 100%);
+  border:1px solid rgba(148,163,184,.18);box-shadow:var(--sh)}
+.pod-3{background:linear-gradient(165deg,#140e00 0%,#0a0600 40%,var(--c2) 100%);
+  border:1px solid rgba(217,119,6,.2);box-shadow:var(--sh)}
 .pod-glow{position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-  width:90px;height:90px;border-radius:50%;filter:blur(28px);pointer-events:none;opacity:.5}
-.pod-pos{font-size:2.8rem;line-height:1;margin-bottom:.4rem}
+  width:100px;height:100px;border-radius:50%;filter:blur(32px);pointer-events:none;opacity:.45}
+.pod-pos{font-weight:800;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--t4);margin-bottom:.5rem}
 .pod-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:1.4rem;margin:0 auto .55rem;border:2.5px solid}
-.pod-name{font-size:.9rem;font-weight:700;margin-bottom:.3rem}
-.pod-pts{font-size:2.4rem;font-weight:900;line-height:1;letter-spacing:-.03em}
-.pod-pts small{font-size:.62rem;color:var(--t3);font-weight:400;letter-spacing:0}
-.pod-row{display:flex;justify-content:center;gap:.7rem;margin-top:.45rem;font-size:.68rem;color:var(--t3)}
-.pod-row b{color:var(--t1);font-weight:700}
+  font-size:1.4rem;margin:0 auto .6rem;border:2px solid}
+.pod-name{font-size:.9rem;font-weight:600;margin-bottom:.2rem}
+.pod-pts{font-size:2.2rem;font-weight:800;line-height:1;letter-spacing:-.03em}
+.pod-pts small{font-size:.55rem;color:var(--t3);font-weight:400;letter-spacing:0}
+.pod-row{display:flex;justify-content:center;gap:.65rem;margin-top:.4rem;font-size:.62rem;color:var(--t3)}
+.pod-row b{color:var(--t2);font-weight:600}
+.pod-rank{display:block;font-size:.6rem;color:var(--t4);letter-spacing:.1em;
+  text-transform:uppercase;margin-top:.35rem}
 
 /* ══════════ LEADERBOARD ══════════ */
 .lb{display:flex;flex-direction:column;gap:.3rem;margin-bottom:1.25rem}
-.lb-row{display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;background:var(--c2);
-  border:1px solid var(--g1);border-radius:12px;cursor:default;
-  transition:all .18s;position:relative;overflow:hidden}
-.lb-row:hover{background:var(--c3);border-color:var(--g2);transform:translateX(2px)}
-.lb-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-  background:var(--acc);border-radius:0 2px 2px 0;opacity:.6}
-.lb-num{font-size:.9rem;font-weight:800;color:var(--t4);width:20px;text-align:center;flex-shrink:0}
-.lb-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:.95rem;flex-shrink:0;border:2px solid}
-.lb-name{font-size:.88rem;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lb-track{flex:1.8;max-width:200px}
-.lb-track-bg{background:var(--c4);border-radius:99px;height:5px;overflow:hidden}
-.lb-track-fill{height:5px;border-radius:99px;animation:bar .8s ease both;transition:width .7s}
-.lb-stats{display:flex;gap:.55rem;font-size:.67rem;color:var(--t3)}
-.lb-stats b{color:var(--t2);font-weight:600}
-.lb-pts{font-size:1.25rem;font-weight:900;min-width:44px;text-align:right;letter-spacing:-.02em}
+.lb-row{display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem;background:var(--c2);
+  border:1px solid var(--g1);border-radius:10px;cursor:default;
+  transition:all .18s;position:relative}
+.lb-row:hover{background:var(--c3);border-color:var(--g2)}
+.lb-rank{font-size:.75rem;font-weight:700;color:var(--t4);width:22px;text-align:center;flex-shrink:0}
+.lb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.85rem;flex-shrink:0;border:1.5px solid}
+.lb-name{font-size:.82rem;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t2)}
+.lb-metric{display:flex;gap:.5rem;flex-shrink:0;margin-right:.25rem}
+.lb-metric span{font-size:.6rem;color:var(--t3);white-space:nowrap}
+.lb-metric b{color:var(--t1);font-weight:600}
+.lb-bar{flex:1;max-width:120px;min-width:60px}
+.lb-bar-bg{background:var(--c4);border-radius:99px;height:4px;overflow:hidden}
+.lb-bar-fill{height:4px;border-radius:99px;transition:width .6s}
+.lb-bar-fill.gold{background:var(--gold)}
+.lb-bar-fill.silver{background:#94a3b8}
+.lb-bar-fill.bronze{background:#d97706}
+.lb-pts{font-size:1.1rem;font-weight:700;min-width:40px;text-align:right;letter-spacing:-.02em}
 
 /* ══════════ NOTICE BANNERS ══════════ */
 .notice{border-radius:10px;padding:.65rem 1rem;font-size:.8rem;margin-bottom:.85rem;line-height:1.5}
@@ -2225,72 +2227,72 @@ function renderClassement(){
   const pct=Math.round(played/72*100);
 
   document.getElementById('pg-stats').innerHTML=[
-    ['--gold', played,    'Matchs joués',   pct+'%'],
-    ['--blu',  72-played, 'À jouer',        ''],
-    ['--grn',  goals,     'Buts inscrits',  ''],
-    ['--pur2', pct+'%',   'Avancement',     ''],
-  ].map(([acc,v,l],i)=>`
+    ['--gold', played,    'Matchs joués'],
+    ['--blu',  72-played, 'À jouer'],
+    ['--grn',  goals,     'Buts inscrits'],
+    ['--pur',  pct+'%',   'Avancement'],
+  ].map(([acc,v,l])=>`
     <div class="mini-stat" style="--acc:var(${acc})">
       <div class="mini-stat-v" style="color:var(${acc})">${v}</div>
       <div class="mini-stat-l">${l}</div>
     </div>`).join('');
 
-  const glows=['rgba(240,168,40,.6)','rgba(148,163,184,.4)','rgba(217,119,6,.5)'];
   const order=[1,0,2];
-  const medals=['🥇','🥈','🥉'];
+  const labels=['2e','1er','3e'];
   document.getElementById('pg-podium').innerHTML=order.map(ri=>{
     const p=rank[ri]; if(!p) return '';
     const col=COLORS[p.pi];
     const cl=ri===0?'pod-1':ri===1?'pod-2':'pod-3';
+    const glow=['rgba(240,168,40,.45)','rgba(148,163,184,.3)','rgba(217,119,6,.35)'][ri];
     return `<div class="${cl} pod">
-      <div class="pod-glow" style="background:${glows[ri]}"></div>
-      <div class="pod-pos">${medals[ri]}</div>
-      <div class="pod-av" style="background:${col}18;border-color:${col}55;cursor:pointer" onclick="openPC(${p.pi})">${AVATARS[p.pi]}</div>
+      <div class="pod-glow" style="background:${glow}"></div>
+      <div class="pod-pos">${labels[ri]}</div>
+      <div class="pod-av" style="background:${col}14;border-color:${col}45;cursor:pointer" onclick="openPC(${p.pi})">${AVATARS[p.pi]}</div>
       <div class="pod-name" onclick="openPC(${p.pi})" style="cursor:pointer">${p.name}</div>
       <div class="pod-pts" style="color:${col}">${p.pts}<small> pts</small></div>
-      <div class="pod-row"><span>🎯<b>${p.exact}</b></span><span>✅<b>${p.winner}</b></span><span>📋<b>${p.played}</b></span></div>
+      <div class="pod-row"><span>Exacts <b>${p.exact}</b></span><span>Vainqueurs <b>${p.winner}</b></span><span>Joués <b>${p.played}</b></span></div>
+      <span class="pod-rank">${ri===0?'— Leader —':ri===1?'— Challenger —':'— Poursuivant —'}</span>
     </div>`;
   }).join('');
 
   document.getElementById('pg-lb').innerHTML=rank.map((p,ri)=>{
     const col=COLORS[p.pi];
     const bw=maxPts>0?Math.round(p.pts/maxPts*100):0;
-    const medal=ri===0?'🥇':ri===1?'🥈':ri===2?'🥉':`${ri+1}`;
-    return `<div class="lb-row" style="--acc:${col}">
-      <div class="lb-num">${medal}</div>
-      <div class="lb-av" style="background:${col}14;border-color:${col}45;cursor:pointer" onclick="openPC(${p.pi})">${AVATARS[p.pi]}</div>
+    const barClass=ri===0?'gold':ri===1?'silver':ri===2?'bronze':'';
+    return `<div class="lb-row">
+      <div class="lb-rank">#${ri+1}</div>
+      <div class="lb-av" style="background:${col}14;border-color:${col}35;cursor:pointer" onclick="openPC(${p.pi})">${AVATARS[p.pi]}</div>
       <div class="lb-name" onclick="openPC(${p.pi})" style="cursor:pointer">${p.name}</div>
-      <div class="lb-track">
-        <div class="lb-track-bg"><div class="lb-track-fill" style="width:${bw}%;background:${col}"></div></div>
+      <div class="lb-metric">
+        <span>Ex: <b>${p.exact}</b></span>
+        <span>V: <b>${p.winner}</b></span>
+        <span>J: <b>${p.played}</b></span>
       </div>
-      <div class="lb-stats"><span>🎯<b>${p.exact}</b></span><span>✅<b>${p.winner}</b></span></div>
+      <div class="lb-bar">
+        <div class="lb-bar-bg"><div class="lb-bar-fill ${barClass}" style="width:${bw}%"></div></div>
+      </div>
       <div class="lb-pts" style="color:${col}">${p.pts}</div>
     </div>`;
   }).join('');
 
-  // ── CIRQUE (bottom 3) ──
+  // ── BAS DE TABLEAU ──
   if(rank.length<3)return;
   const bottom=rank.slice(-3).reverse();
-  const gags=[
-    ['🧹',`${bottom[0].name} tellement inexistant qu'on l'a oublié dans les chiottes du stade`,'act-fall'],
-    ['🤹',`${bottom[1].name} jongle avec ses 0 points comme un chef`,'act-juggle'],
-    ['🤡',`${bottom[2].name} frôle le fond du classement, un vrai clown de salon`,'act-lion'],
-  ];
+  const gap=rank[0].pts-bottom[bottom.length-1].pts;
   document.getElementById('pg-circus').innerHTML=`
-    <div class="circus">
-      <div class="circus-tent"></div>
-      <div class="circus-title">🎪 Le Cirque des Derniers</div>
-      <div class="circus-sub">👏 Ils ont donné tout ce qu'ils pouvaient... enfin presque</div>
-      <div class="circus-stage">
+    <div class="tail-section">
+      <div class="tail-title">Bas de tableau</div>
+      <div class="tail-sub">Écart leader–dernier : ${gap} pts</div>
+      <div class="tail-grid">
         ${bottom.map((p,i)=>{
           const col=COLORS[p.pi];
-          const [emoji,gag,cls]=gags[i];
           const drop=rank[0].pts-p.pts;
-          return `<div class="circus-act ${cls}">
-            <span class="circus-act-av" style="border-bottom:2px solid ${col}55;padding-bottom:4px">${AVATARS[p.pi]}</span>
-            <div class="circus-act-name" style="color:${col}">${p.name}</div>
-            <div class="circus-act-pts">${p.pts} pts (‑${drop} du leader)</div>
-            <div class="circus-act-gag">${emoji} ${gag}</div>
+          return `<div class="tail-card">
+            <div class="tail-pos">#${rank.length-2+i}</div>
+            <div class="tail-av" style="background:${col}14;border-color:${col}35">${AVATARS[p.pi]}</div>
+            <div class="tail-name">${p.name}</div>
+            <div class="tail-pts">${p.pts} pts</div>
+            <div class="tail-gap">‑${drop} du leader</div>
           </div>`;
         }).join('')}
       </div>
