@@ -2267,8 +2267,8 @@ function renderClassement(){
       <div class="mini-stat-l">${l}</div>
     </div>`).join('');
 
-  const order=[1,0,2];
-  const labels=['2e','1er','3e'];
+  const order=[0,1,2];
+  const labels=['1er','2e','3e'];
   document.getElementById('pg-podium').innerHTML=order.map(ri=>{
     const p=rank[ri]; if(!p) return '';
     const col=COLORS[p.pi];
@@ -2581,6 +2581,7 @@ async function autoFetchStats(id, retries=3){
 function renderMM(id){
   const m=MATCHES.find(x=>x[0]===id); if(!m) return;
   const r=RS[id]||[null,null];
+  const played=r[0]!==null;
   const t1=m[3],t2=m[4];
   const manualEvts=(ME[id]||[]);
   const autoEvts=(AE[id]||[]);
@@ -2643,7 +2644,7 @@ function renderMM(id){
   }
 
   // ── STATS ──
-  const hasStats=Object.keys(st).length>0;
+  const hasStats=Object.keys(ms).length>0;
   // Will be filled by autoFetchStats asynchronously if empty
   const STAT_DEFS=[
     {k:'poss', label:'Possession', unit:'%', max:100},
